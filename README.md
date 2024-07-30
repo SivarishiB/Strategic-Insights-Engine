@@ -1,78 +1,159 @@
-# Strategic Insight Engine
+# insights-net
 
-The Strategic Insight Engine is an advanced application designed to provide strategic insights and decision support across various domains including business, finance, marketing, and more. It leverages data analytics, AI-driven algorithms, and real-time information processing to deliver actionable insights for strategic planning and decision-making.
+Network analysis tool based on [insights-core](https://github.com/RedHatInsights/insights-core).
 
-## Features
+It provides:
 
-- **Data Integration and Analysis:** Integrates data from multiple sources (databases, APIs, social media) and performs comprehensive analysis using statistical methods, machine learning, and NLP.
-  
-- **Customizable Dashboards:** User-friendly interface with customizable dashboards for market analysis, competitor intelligence, financial forecasting, etc. Real-time updates and visualization of key metrics and trends.
+- A set of plugins that support parsing networking-related logs
+- A CLI tool that allows running commands to extract information from log archives.
 
-- **Predictive Analytics:** Uses predictive models to forecast future scenarios based on historical data and current trends, providing insights into potential outcomes and risks.
+## Getting started
 
-- **Scenario Planning:** Allows simulation of various scenarios to assess their impact on business outcomes, facilitating strategic planning under different market conditions.
+After cloning the repository, create a venv and install the tool
 
-- **Competitive Intelligence:** Monitors competitors’ activities and performance metrics to inform strategic positioning and decision-making.
+(Optional) Create a virtual environment:
 
-- **Risk Management:** Evaluates risks associated with strategic initiatives and suggests risk mitigation strategies, with real-time alerts on emerging risks.
+    $ python -m venv venv && . ./venv/bin/activate
 
-- **Collaboration and Sharing:** Facilitates collaboration with team members through sharing capabilities for insights, reports, and dashboards, supporting annotation and commenting.
+Install the tool using pip:
 
-- **Integration Capabilities:** Integrates with existing enterprise systems (CRM, ERP) and third-party applications via APIs for seamless data flow and unified insights.
+    $ pip install insights-net
 
-- **Security and Compliance:** Implements robust security measures to protect sensitive data and ensure compliance with industry regulations (GDPR, HIPAA), with role-based access control.
+Or install the tool from the repository directly:
 
-## Target Audience
+    $ (venv) pip install .
 
-- **Business Executives:** CEOs, CFOs, CMOs, and other C-suite executives.
-- **Strategic Planners:** Professionals involved in strategic planning and decision-making.
-- **Analysts and Consultants:** Data analysts, market researchers, and strategic consultants.
-- **Financial Advisors:** Professionals in finance and investment sectors.
+## Run insights shell
 
-## Technologies Used
+`insights-net` supports connecting to a running instance of insights shell and
+extract information from it. For more details about `insights shell`, visit the
+[insights documentation](https://insights-core.readthedocs.io/en/latest/).
 
-- **Backend:** Python, Django, PostgreSQL
-- **Frontend:** React.js, D3.js
-- **AI/ML:** TensorFlow, Scikit-learn
-- **Cloud Services:** AWS, Azure, Google Cloud Platform
-- **Security:** TLS/SSL, OAuth
+Run `insights shell` on kernel-mode ("-k" or "--kernel") on the archives you want to analyze and specify the load insights-net plugins:
 
-## Installation
 
-1. Clone the repository:
+    $ insights shell -k  -p insights_net.plugins samples/ovn/sosreport-compute-0-2021-06-03-awkezkh samples/ovn/sosreport-controller-0-2021-06-03-qjzsrnv
+    NOTE: When using the `ipython kernel` entry point, Ctrl-C will not work.
 
-   ```
-   git clone https://github.com/yourusername/strategic-insight-engine.git
-   cd strategic-insight-engine
-   ```
+    To exit, you will have to explicitly quit this process, by either sending
+    "quit" from a client, or using Ctrl-\ in UNIX-like environments.
 
-2. Install dependencies:
+    To read more about this, see https://github.com/ipython/ipython/issues/2049
 
-   ```
-   pip install -r requirements.txt
-   npm install  # if using Node.js for frontend dependencies
-   ```
 
-3. Set up database and configure settings as per your environment.
+    To connect another client to this kernel, use:
+        --existing kernel-3973772.json
 
-4. Run the application:
 
-   ```
-   python manage.py runserver
-   npm start  # for frontend development server
-   ```
+Now, in another terminal, you can run insights-net to introspect the archives:
 
-## Future Enhancements
+    $ insights-net
+    Usage: insights-net [OPTIONS] COMMAND [ARGS]...
 
-- Implement advanced NLP capabilities for text analysis and sentiment analysis.
-- Develop more sophisticated machine learning models and recommendation engines.
-- Explore blockchain integration for enhanced data security and transparency.
-- Introduce real-time collaboration features for simultaneous decision-making.
+    Options:
+      -v, --verbose  Be verbose
+      --help         Show this message and exit.
 
-## Contributing
+    Commands:
+      find-ip  Get all the available information regarding an IP(v4/6) address
+      host     Show basic host information
+      info     Show basic information of the archives
+      ovn      Show the OVN configuration
+      ovs      Show the OVS configuration
+      stop     Stop the background running insights kernel
 
-Contributions are welcome! Please fork the repository and submit pull requests for any enhancements, bug fixes, or new features.
 
----
+## Extracting data from running running OVSDB servers
 
-This README provides an overview of the project, its features, installation instructions, technologies used, future enhancements, contribution guidelines, licensing information, and contact details. Adjust the sections as necessary based on your specific project details and preferences.
+`insights-net` has a plugin that supports extracting OVS, OVN NB and OVN SB information from a running ovsdb-server that serves such databases.
+
+In order to use it, start an ovsdb-server you want to inspect (you might want to use the help of [ovs-offline](https://ovs-dbg.readthedocs.io/en/latest/ovs-offline.html)). **Note only unix-domain socket transport is supported.**
+
+Then, just add the directory where the socket file stored to the `insights shell` command line as another archive, e.g:
+
+
+    insights shell -k -p insights_net.plugins /var/run/openvswitch
+
+
+You can now examine the OVS or OVN databases using the insights-net command line (see [Available commands(#available-commands))
+
+Other commands (such as `insights-net find-ip`) will also process information from such OVSDB instances
+
+
+## Available commands:
+
+### host: Dump a brief summary of the host information:
+Example output:
+
+
+```
+ $ insights-net host
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                  📜 Archive: /home/amorenoz/devel/sosreports/ovn/sosreport-compute-0-2021-06-03-awkezkh/ 📜                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+HostName: compute-0.redhat.local
+Red Hat Version:
+  Product: Red Hat Enterprise Linux
+  Version: 8.2
+  Code Name: Ootpa
+Kernel:
+  Version : 4.18.0
+  Release: 193.51.1.el8_2
+  Arch: x86_64
+Uptime for 1 days 19:45 hh:mm
+Selinux: enabled
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                 📜 Archive: /home/amorenoz/devel/sosreports/ovn/sosreport-controller-0-2021-06-03-qjzsrnv 📜                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+HostName: controller-0.redhat.local
+Red Hat Version:
+  Product: Red Hat Enterprise Linux
+  Version: 8.2
+  Code Name: Ootpa
+Kernel:
+  Version : 4.18.0
+  Release: 193.51.1.el8_2
+  Arch: x86_64
+Uptime for 1 days 19:57 hh:mm
+Selinux: enabled
+
+```
+
+
+### find-ip: Find IP address information:
+It looks in the following logs to find information about the IP Address:
+
+- Interface addresses (utput of "ip addr")
+- Routes (output of "ip route")
+- Neighbours (output of "ip neigh")
+- Hosts (content of "/etc/hosts")
+- Iptables
+- Netstat (output of "ss" or "netstat")
+- OVS Flow dumps (output of "ovs-ofctl dump-flows")
+- OVN NB and SB databases
+- OCP Pods, Services and Configuration
+
+
+### ovs | ovn: Inspect the OVS and OVN database
+It supports printing the tables and finding elements by UUID:
+
+
+    insights-net ovs list {TABLE_NAME} [--list]
+
+or
+
+    insights-net ovn nb list {TABLE_NAME} [--list]
+
+or
+
+    insights-net ovn sb list {TABLE_NAME} [--list]
+
+
+## Contribute
+
+Are you debugging a networking issue and you would like a tool to automate any information collection, processing or visualization? Do reach out to:
+
+Adrián Moreno <amorenoz@redhat.com> IRC:amorenoz
+
+And, off course, PRs are welcome :)
