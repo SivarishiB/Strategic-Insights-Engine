@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ipython = "*"
+coverage = "*"
+ipykernel = "*"
+click = "*"
+jupyter-console = "*"
+colorama = "*"
+tabulate = "*"
+insights-core = "*"
+rich = "*"
+ovsdbapp = "*"
+ovs-dbg = ">=0.0.10"
+
+[dev-packages]
+pylint = "*"
+black = "*"
+
+
+[pipenv]
+allow_prereleases = true
